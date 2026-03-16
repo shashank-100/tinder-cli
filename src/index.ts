@@ -99,27 +99,35 @@ program
 
         console.log(chalk.gray(`📸 Found ${imageUrls.length} images`));
 
-        // First, do a quick extraction to get the name for image filenames
-        const quickExtractPrompt = `Extract just the name and age from this Tinder profile text:
+        // Extract name from the photos region aria-label (most reliable)
+        let profileName = 'unknown';
+        let profileAge = 0;
+
+        const snapshotForName = await browser['run']('snapshot -i');
+        const nameMatch = snapshotForName.match(/region "(.+?)'s photos"/);
+        if (nameMatch) {
+          profileName = nameMatch[1];
+          console.log(chalk.gray(`📛 Found profile name from snapshot: ${profileName}`));
+        }
+
+        // Quick extraction for age
+        const quickExtractPrompt = `Extract just the age from this Tinder profile text:
 ${pageText.substring(0, 500)}
 
-Return ONLY JSON: {"name": "extracted name", "age": number}`;
+Return ONLY JSON: {"age": number}`;
 
         const quickExtract = await agent.scorer['client'].chat.completions.create({
           model: 'gpt-4o-mini',
-          max_completion_tokens: 100,
+          max_completion_tokens: 50,
           response_format: { type: 'json_object' },
           messages: [{ role: 'user', content: quickExtractPrompt }]
         });
 
-        let profileName = 'unknown';
-        let profileAge = 0;
         try {
           const extracted = JSON.parse(quickExtract.choices[0].message.content || '{}');
-          profileName = extracted.name || 'unknown';
           profileAge = extracted.age || 0;
         } catch (e) {
-          console.log(chalk.gray('⚠️  Could not extract name, using "unknown"'));
+          console.log(chalk.gray('⚠️  Could not extract age'));
         }
 
         // Download images locally with proper naming

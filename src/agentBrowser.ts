@@ -82,7 +82,8 @@ export class AgentBrowserControl {
       // Get snapshot to find the photo region
       const snapshot = await this.run('snapshot -i');
 
-      // Match "photo" or "photos" region (can be singular or plural)
+      // Match the FIRST "photo" or "photos" region (the active card on top)
+      // We want aria-hidden="false" to get the visible/active card
       const photosMatch = snapshot.match(/region ".*?photo.*?".*?\[ref=(e\d+)\]/i);
       if (!photosMatch) {
         // Debug: show relevant snapshot lines
