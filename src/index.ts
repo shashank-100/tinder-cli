@@ -136,8 +136,9 @@ Return ONLY JSON: {"name": "extracted name", "age": number}`;
         // Check for duplicates
         const profileKey = `${decision.extractedProfile.name}-${decision.extractedProfile.age}`;
         if (seenProfiles.has(profileKey)) {
-          console.log(chalk.yellow(`\n⚠️  Duplicate profile detected: ${profileKey}, skipping...\n`));
-          continue;
+          console.log(chalk.yellow(`\n⚠️  Duplicate profile detected: ${profileKey}`));
+          console.log(chalk.yellow(`This means the swipe didn't work or we're stuck. Breaking loop.\n`));
+          break; // Stop instead of continuing - we're stuck
         }
         seenProfiles.add(profileKey);
 

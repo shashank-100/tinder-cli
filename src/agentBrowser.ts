@@ -46,10 +46,12 @@ export class AgentBrowserControl {
         console.log(`👆 Clicking LIKE button @${likeMatch[1]}`);
         await this.run(`click @${likeMatch[1]}`);
         console.log(`✅ Swiped right successfully`);
+        // Wait for animation and next profile to load
+        console.log(`⏳ Waiting for next profile...`);
+        await new Promise(resolve => setTimeout(resolve, 4000));
       } else {
         console.log(`⚠️  LIKE button not found`);
       }
-      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (error) {
       console.error('Error swiping right:', error);
     }
@@ -64,10 +66,12 @@ export class AgentBrowserControl {
         console.log(`👆 Clicking NOPE button @${nopeMatch[1]}`);
         await this.run(`click @${nopeMatch[1]}`);
         console.log(`✅ Swiped left successfully`);
+        // Wait for animation and next profile to load
+        console.log(`⏳ Waiting for next profile...`);
+        await new Promise(resolve => setTimeout(resolve, 4000));
       } else {
         console.log(`⚠️  NOPE button not found`);
       }
-      await new Promise(resolve => setTimeout(resolve, 3000));
     } catch (error) {
       console.error('Error swiping left:', error);
     }
