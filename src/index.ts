@@ -69,6 +69,25 @@ program
       const seenProfiles = new Set<string>();
 
       for (let i = 0; i < limit; i++) {
+        // First, check if buttons are available (means a profile is loaded)
+        const snapshot = await browser['run']('snapshot -i');
+        const hasButtons = snapshot.includes('button "NOPE"') && snapshot.includes('button "LIKE"');
+
+        if (!hasButtons) {
+          console.log(chalk.yellow('\n⚠️  No profile loaded (out of profiles or still loading)\n'));
+          console.log(chalk.gray('Waiting 5 seconds for profile to load...\n'));
+          await new Promise(resolve => setTimeout(resolve, 5000));
+
+          // Check again
+          const snapshot2 = await browser['run']('snapshot -i');
+          const hasButtons2 = snapshot2.includes('button "NOPE"') && snapshot2.includes('button "LIKE"');
+
+          if (!hasButtons2) {
+            console.log(chalk.yellow('⚠️  Still no profile - stopping\n'));
+            break;
+          }
+        }
+
         // Get raw page text and images
         const pageText = await browser.getPageText();
         const imageUrls = await browser.getProfileImages();
