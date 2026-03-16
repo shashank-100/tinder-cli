@@ -80,11 +80,34 @@ program
 
         console.log(chalk.gray(`📸 Found ${imageUrls.length} images`));
 
-        // Download images locally first, then send local paths to OpenAI
+        // First, do a quick extraction to get the name for image filenames
+        const quickExtractPrompt = `Extract just the name and age from this Tinder profile text:
+${pageText.substring(0, 500)}
+
+Return ONLY JSON: {"name": "extracted name", "age": number}`;
+
+        const quickExtract = await agent.scorer['client'].chat.completions.create({
+          model: 'gpt-4o-mini',
+          max_completion_tokens: 100,
+          response_format: { type: 'json_object' },
+          messages: [{ role: 'user', content: quickExtractPrompt }]
+        });
+
+        let profileName = 'unknown';
+        let profileAge = 0;
+        try {
+          const extracted = JSON.parse(quickExtract.choices[0].message.content || '{}');
+          profileName = extracted.name || 'unknown';
+          profileAge = extracted.age || 0;
+        } catch (e) {
+          console.log(chalk.gray('⚠️  Could not extract name, using "unknown"'));
+        }
+
+        // Download images locally with proper naming
         let localImagePaths: string[] = [];
         if (imageUrls.length > 0) {
-          console.log(chalk.gray(`⬇️  Downloading images...`));
-          localImagePaths = await csvExporter.downloadImages(imageUrls, 'temp', 0);
+          console.log(chalk.gray(`⬇️  Downloading images for ${profileName}...`));
+          localImagePaths = await csvExporter.downloadImages(imageUrls, profileName, profileAge);
           console.log(chalk.gray(`✅ Downloaded ${localImagePaths.length} images\n`));
         }
 
