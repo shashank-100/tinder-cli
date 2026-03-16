@@ -150,41 +150,37 @@ Return ONLY a JSON object in this exact format:
 
       console.log(`✅ Prepared ${imageContents.length} images for OpenAI`);
 
-      const prompt = `You are a dating profile photo analyzer. Rate these photos' overall appeal for a dating profile.
+      const prompt = `You are an AI dating assistant analyzing Tinder profile images.
 
-MANDATORY FACE REQUIREMENT:
-- First, check if the person's FACE is clearly visible in at least ONE image
-- If face is NOT visible in ANY image (hidden, obscured, blurry, turned away, covered by objects/hands, or cut off) → return score: 0
-- If face IS NOT clearly visible, STOP analysis immediately and return score 0
+Your task is to evaluate the images and determine whether the agent should swipe right or swipe left.
 
-SCORING CRITERIA (only if face is clearly visible in at least one image):
-Rate from 0 to 10 based on these objective factors:
+Analyze up to 4 images and evaluate the following:
 
-1. FACIAL FEATURES (70% weight):
-   - Facial symmetry and proportions
-   - Feature clarity (eyes, nose, lips, jawline)
-   - Skin appearance
-   - Expression quality (smile, friendliness)
-   - Overall facial aesthetics
+1. FACE VISIBILITY
+Check if at least one image contains a clearly visible human face.
+If no clear human face is visible in any image, the profile should be rejected.
 
-2. PHYSICAL PRESENTATION (20% weight):
-   - Body proportions and fitness indicators
-   - Posture and confidence
-   - Grooming and styling
-   - Overall presentation
+Examples of NO_FACE cases:
+- Landscapes
+- Pets only
+- Food photos
+- Memes or text images
+- Extremely blurry images
+- Photos where the person is turned away
+- Face obscured by objects, hands, or filters
+- Face cut off from frame
 
-3. PHOTO QUALITY (10% weight):
-   - Lighting quality
-   - Photo clarity and sharpness
-   - Framing and composition
-   - Professional appearance
+2. ATTRACTIVENESS
+Rate the attractiveness of the person on a scale from 1 to 10 based on:
+- Facial symmetry
+- Grooming and appearance
+- Confidence and body language
+- Overall presentation in the images
 
-SCORING GUIDELINES:
-- 0 = Face not visible
-- 1-10 = Rate based on the criteria above
-- Use precise decimals (e.g., 6.3, 7.8, 8.5)
-- Be objective and use the full 1-10 range
-- Don't cluster around certain numbers
+DECISION RULES:
+- If NO_FACE → score: 0
+- If attractiveness_score < 5 → score should reflect this (1-4 range)
+- Otherwise score based on attractiveness (5-10 range)
 
 Return ONLY a JSON object:
 {

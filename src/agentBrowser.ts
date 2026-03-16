@@ -7,7 +7,8 @@ import { Profile } from './types.js';
 const execAsync = promisify(exec);
 
 export class AgentBrowserControl {
-  private browserCmd = 'agent-browser --cdp http://localhost:9222';
+  // Use agent-browser --auto-connect to connect to running Chrome
+  private browserCmd = 'agent-browser --auto-connect';
 
   private async run(command: string): Promise<string> {
     try {

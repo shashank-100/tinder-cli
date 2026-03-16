@@ -31,19 +31,30 @@ export ANTHROPIC_API_KEY=your-api-key-here
 
 ## Usage
 
-### First Time Setup
+### Usage
 
-1. Login to Tinder in your browser manually:
+**Prerequisites**:
+1. Open Chrome normally (your regular Chrome with all your logins)
+2. Navigate to https://tinder.com/app/recs and make sure you're logged in
+3. Leave Chrome open
+
+Then run the agent:
+
 ```bash
-open https://tinder.com
-# Login normally, the session will persist
-```
-
-### Start the Real Agent
-
-```bash
+# Process 20 profiles (default)
 npm start
+
+# Process 3 profiles (test)
+npm start -- --limit 3
+
+# Skip preferences (use defaults)
+npm start -- --skip-preferences --limit 5
+
+# Fast mode (no delays)
+npm start -- --auto --limit 10
 ```
+
+The agent will connect to your running Chrome and use your existing Tinder session!
 
 This will:
 1. Ask for your preferences (type, age range, distance, interests)
