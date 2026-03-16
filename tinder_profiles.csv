@@ -1,0 +1,21 @@
+Name,Age,Bio,Score,Action,Reasoning,Image URLs
+,0,,0,LEFT,No images available (no bio: -2 pts),
+,0,,0,LEFT,No images available (no bio: -2 pts),
+,null,,0,LEFT,"Face not visible in the image (completely dark/obscured), so mandatory face requirement fails. (no bio: -2 pts)",/Users/shashank/tinder-cli/profile_images/_null_1773639890037_1.jpg
+Niya,24,"Hi, my name is Nitya. Here are some of my favorite things: Disney, Movies, Coffee.
+Fun and hook-ups kinda yaak men's please don't text.",0.5,LEFT,Unable to analyze images,/Users/shashank/tinder-cli/profile_images/Niya_24_1773639912153_1.jpg
+Zara,26,,0,LEFT,Unable to analyze images (no bio: -2 pts),/Users/shashank/tinder-cli/profile_images/Zara_26_1773639931358_1.jpg
+Pooja,25,,0,LEFT,No human face is visible in the image (close-up of a rose). Fails the mandatory face visibility requirement. (no bio: -2 pts),/Users/shashank/tinder-cli/profile_images/Pooja_25_1773639950731_1.jpg
+Unknown,25,,4,LEFT,Unable to analyze profile,
+,0,,0,LEFT,Unable to analyze images (no bio: -2 pts),/Users/shashank/tinder-cli/profile_images/_0_1773640272529_1.jpg
+Ayesha,19,,0,LEFT,Unable to analyze images (no bio: -2 pts),/Users/shashank/tinder-cli/profile_images/Ayesha_19_1773640293223_1.jpg
+Khushi Kamble,26,"Want someone who love me forever unconditionly can u be myy♥️ medicore🎊🍁.....,.can u be mine 🥰",0.5,LEFT,Unable to analyze images,/Users/shashank/tinder-cli/profile_images/temp_0_1773640394919_1.jpg
+Lena,23,It's easy to know me on call so.....and I am looking for an intellectual relationship,0.5,LEFT,No images available,
+Esha,26,Looking for emotionally intelligent person,0.5,LEFT,Unable to analyze images,/Users/shashank/tinder-cli/profile_images/temp_0_1773640947996_1.jpg
+Bhavika,26,,0,LEFT,Unable to analyze images (no bio: -2 pts),/Users/shashank/tinder-cli/profile_images/temp_0_1773641005723_1.jpg
+Saniya,22,,0,LEFT,"Face not clearly visible in the image (dark, turned away/obscured). Mandatory face requirement not met, so no further evaluation possible. (no bio: -2 pts)",/Users/shashank/tinder-cli/profile_images/temp_0_1773641088078_1.jpg
+Nikita,22,,0,LEFT,Unable to analyze images (no bio: -2 pts),/Users/shashank/tinder-cli/profile_images/temp_0_1773641138761_1.jpg
+Shru,24,"Hey there, I'm Shru. Here are some things I do when I'm not at work: 90s Kid, Self Care, and Maggi. What do you do in your free time?",0,LEFT,"Face is obscured by the phone/hand and not clearly visible, failing the mandatory face-visibility requirement.",/Users/shashank/tinder-cli/profile_images/temp_0_1773641157076_1.jpg
+,0,,0,LEFT,No images available (no bio: -2 pts),
+,0,,0,LEFT,No images available (no bio: -2 pts),
+,null,,0,LEFT,No images available (no bio: -2 pts),

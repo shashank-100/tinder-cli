@@ -1,0 +1,1 @@
+JSON.stringify(Array.from(document.querySelectorAll('div[aria-label*="Profile Photo"]')).map(div => { const style = div.getAttribute('style'); if (!style) return null; const match = style.match(/url\("(.+?)"\)/); return match ? match[1] : null; }).filter(url => url).slice(0, 4))
