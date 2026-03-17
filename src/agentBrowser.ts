@@ -1,15 +1,19 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import fs from 'fs';
-import path from 'path';
-import { Profile } from './types.js';
 
 const execAsync = promisify(exec);
 
+/**
+ * TOOL LAYER: Pure browser automation functions
+ * These functions interact directly with the browser via agent-browser
+ * No business logic - just browser actions
+ */
 export class AgentBrowserControl {
-  // Use agent-browser --auto-connect to connect to running Chrome
   private browserCmd = 'agent-browser --auto-connect';
 
+  /**
+   * Execute agent-browser command
+   */
   private async run(command: string): Promise<string> {
     try {
       const { stdout, stderr } = await execAsync(`${this.browserCmd} ${command}`);
@@ -22,121 +26,85 @@ export class AgentBrowserControl {
     }
   }
 
+  /**
+   * TOOL: Get raw page text
+   */
   async getPageText(): Promise<string> {
-    try {
-      const result = await this.run(`eval "document.body.innerText"`);
-      return result || '';
-    } catch (error) {
-      console.error('Error getting page text:', error);
-      return '';
-    }
+    const result = await this.run(`eval "document.body.innerText"`);
+    return result || '';
   }
 
-  private extractInterests(bio: string): string[] {
-    const keywords = ['AI', 'tech', 'startup', 'travel', 'fitness', 'yoga', 'music', 'art', 'food', 'coffee'];
-    return keywords.filter(k => bio.toLowerCase().includes(k.toLowerCase()));
-  }
-
+  /**
+   * TOOL: Swipe right (LIKE)
+   */
   async swipeRight(): Promise<void> {
-    try {
-      // Get snapshot and find LIKE button ref
-      const snapshot = await this.run('snapshot -i');
-      const likeMatch = snapshot.match(/button "LIKE".*?\[ref=(e\d+)\]/);
-      if (likeMatch) {
-        console.log(`👆 Clicking LIKE button @${likeMatch[1]}`);
-        await this.run(`click @${likeMatch[1]}`);
-        console.log(`✅ Swiped right successfully`);
-        // Wait for animation and next profile to load
-        console.log(`⏳ Waiting for next profile...`);
-        await new Promise(resolve => setTimeout(resolve, 4000));
-      } else {
-        console.log(`⚠️  LIKE button not found`);
-      }
-    } catch (error) {
-      console.error('Error swiping right:', error);
+    const snapshot = await this.run('snapshot -i');
+    const likeMatch = snapshot.match(/button "LIKE".*?\[ref=(e\d+)\]/);
+
+    if (!likeMatch) {
+      throw new Error('LIKE button not found');
     }
+
+    await this.run(`click @${likeMatch[1]}`);
+    console.log(`✅ Swiped RIGHT`);
   }
 
+  /**
+   * TOOL: Swipe left (NOPE)
+   */
   async swipeLeft(): Promise<void> {
-    try {
-      // Get snapshot and find NOPE button ref
-      const snapshot = await this.run('snapshot -i');
-      const nopeMatch = snapshot.match(/button "NOPE".*?\[ref=(e\d+)\]/);
-      if (nopeMatch) {
-        console.log(`👆 Clicking NOPE button @${nopeMatch[1]}`);
-        await this.run(`click @${nopeMatch[1]}`);
-        console.log(`✅ Swiped left successfully`);
-        // Wait for animation and next profile to load
-        console.log(`⏳ Waiting for next profile...`);
-        await new Promise(resolve => setTimeout(resolve, 4000));
-      } else {
-        console.log(`⚠️  NOPE button not found`);
-      }
-    } catch (error) {
-      console.error('Error swiping left:', error);
+    const snapshot = await this.run('snapshot -i');
+    const nopeMatch = snapshot.match(/button "NOPE".*?\[ref=(e\d+)\]/);
+
+    if (!nopeMatch) {
+      throw new Error('NOPE button not found');
     }
+
+    await this.run(`click @${nopeMatch[1]}`);
+    console.log(`✅ Swiped LEFT`);
   }
 
+  /**
+   * TOOL: Get profile image URLs
+   */
   async getProfileImages(): Promise<string[]> {
-    try {
-      // Get snapshot to find the photo region
-      const snapshot = await this.run('snapshot -i');
+    const html = await this.run('get html body');
+    const urlPattern = /background-image:\s*url\(&quot;(https:\/\/images[^&]*?gotinder\.com[^&]*?)&quot;\)/g;
+    const urls: string[] = [];
+    const seen = new Set<string>();
+    let match;
 
-      // Match the FIRST "photo" or "photos" region (the active card on top)
-      // We want aria-hidden="false" to get the visible/active card
-      const photosMatch = snapshot.match(/region ".*?photo.*?".*?\[ref=(e\d+)\]/i);
-      if (!photosMatch) {
-        // Debug: show relevant snapshot lines
-        const lines = snapshot.split('\n').filter(l => l.toLowerCase().includes('photo') || l.toLowerCase().includes('image') || l.toLowerCase().includes('region'));
-        console.log('🔍 Snapshot debug (photo/image/region lines):', lines.slice(0, 10).join('\n'));
-
-        // Fallback: try to get full page HTML and extract image URLs
-        console.log('⚠️  No photo region found, trying full page HTML...');
-        const html = await this.run('get html body');
-        const urlPattern = /background-image:\s*url\(&quot;(https:\/\/[^&]*images\.gotinder\.com[^&"]*?)(?:&amp;|&quot;)/g;
-        const urls: string[] = [];
-        let match;
-        while ((match = urlPattern.exec(html)) !== null && urls.length < 4) {
-          const url = match[1].replace(/&amp;/g, '&');
-          urls.push(url);
-        }
-        if (urls.length > 0) {
-          console.log(`📸 Found ${urls.length} images from full page HTML`);
-          return urls;
-        }
-        return [];
+    while ((match = urlPattern.exec(html)) !== null && urls.length < 4) {
+      const url = match[1];
+      if (!seen.has(url)) {
+        seen.add(url);
+        urls.push(url);
       }
-
-      const photosRef = `@${photosMatch[1]}`;
-
-      // Get HTML of photos region
-      const html = await this.run(`get html ${photosRef}`);
-
-      // Extract URLs from background-image: url(&quot;...&quot;)
-      const urlPattern = /background-image:\s*url\(&quot;(https:\/\/.*?)&quot;\)/g;
-      const urls: string[] = [];
-      let match;
-
-      while ((match = urlPattern.exec(html)) !== null && urls.length < 4) {
-        const url = match[1].replace(/&amp;/g, '&');
-        if (url.includes('gotinder.com')) {
-          urls.push(url);
-        }
-      }
-
-      return urls;
-    } catch (error) {
-      console.error('Error getting images:', error);
-      return [];
     }
+
+    return urls;
   }
 
-  async ensureTinderPage(): Promise<void> {
-    try {
-      await this.run('open https://tinder.com/app/recs');
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    } catch (error) {
-      console.error('Error opening Tinder:', error);
-    }
+  /**
+   * TOOL: Wait for next profile to load
+   */
+  async nextProfile(waitTime: number = 3000): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+
+  /**
+   * TOOL: Check if profile is loaded
+   */
+  async isProfileLoaded(): Promise<boolean> {
+    const snapshot = await this.run('snapshot -i');
+    return snapshot.includes('button "NOPE"') && snapshot.includes('button "LIKE"');
+  }
+
+  /**
+   * TOOL: Open Tinder
+   */
+  async openTinder(): Promise<void> {
+    await this.run('open https://tinder.com/app/recs');
+    await new Promise(resolve => setTimeout(resolve, 3000));
   }
 }

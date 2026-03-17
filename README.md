@@ -1,88 +1,97 @@
-# Tinder Agentic CLI
+# Tinder Agent 🤖❤️
 
-An AI-powered Tinder automation agent that uses GPT-5 to intelligently evaluate profiles and make swiping decisions based on your preferences. **Now with REAL Tinder integration!**
+AI-powered Tinder automation agent with **clean architecture** and **Vision API** analysis.
 
 ## Features
 
-- ✅ **Real Tinder Integration**: Connects to actual Tinder using browser automation
-- 🤖 **Intelligent Profile Scoring**: Uses GPT-5 mini to analyze bios and compatibility
-- 🎯 **Customizable Preferences**: Set your type, age range, distance, and interests
-- 📊 **Multi-factor Scoring**: Combines interest match, age compatibility, distance, and bio analysis
-- 🎨 **Beautiful CLI Interface**: Clean, colorful terminal output with progress indicators
-- 📈 **Swipe History**: Tracks decisions and provides session summaries
-- ⚡ **Fast Browser Automation**: Uses gstack's /browse skill for 100ms response times
-- 🔒 **Persistent Sessions**: Login once, session stays active
+- ✅ **4 CLI Commands** - Manual swipes, analysis, and auto-swipe
+- 🤖 **Vision API Analysis** - GPT-4o-mini analyzes profile images for attractiveness
+- 🎯 **Smart Filtering** - Min score threshold, duplicate detection
+- 📊 **Face Detection** - Rejects profiles with no visible face
+- 🎨 **Beautiful CLI** - Clean, colorful terminal output
+- 📈 **CSV Export** - Save all decisions with downloaded images
+- ⚡ **Fast Automation** - Uses agent-browser for real Chrome control
+- 🏗️ **Clean Architecture** - Separated layers: CLI → Agent → Analyzer → Browser Tools
 
-## Installation
+## Quick Start
+
+### Prerequisites
+
+```bash
+# 1. Install agent-browser globally
+npm install -g agent-browser
+
+# 2. Set OpenAI API key
+export OPENAI_API_KEY=your-key-here
+
+# 3. Start Chrome with debugging
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  --remote-debugging-port=9222 \
+  --user-data-dir=/tmp/chrome-debug
+
+# 4. Login to Tinder in Chrome
+# Navigate to https://tinder.com/app/recs
+```
+
+### Installation
 
 ```bash
 npm install
 npm run build
 ```
 
-## Setup
+## Commands
 
-1. Get your Anthropic API key from https://console.anthropic.com/
-2. Set your API key:
+### Manual Swipes
 
 ```bash
-export ANTHROPIC_API_KEY=your-api-key-here
+# Swipe right on current profile
+tinder-agent swipe-right
+
+# Swipe left on current profile
+tinder-agent swipe-left
 ```
 
-## Usage
-
-### Usage
-
-**Prerequisites**:
-1. Open Chrome normally (your regular Chrome with all your logins)
-2. Navigate to https://tinder.com/app/recs and make sure you're logged in
-3. Leave Chrome open
-
-Then run the agent:
+### Analyze (No Swipe)
 
 ```bash
-# Process 20 profiles (default)
-npm start
-
-# Process 3 profiles (test)
-npm start -- --limit 3
-
-# Skip preferences (use defaults)
-npm start -- --skip-preferences --limit 5
-
-# Fast mode (no delays)
-npm start -- --auto --limit 10
+# Get AI recommendation without swiping
+tinder-agent analyze
 ```
 
-The agent will connect to your running Chrome and use your existing Tinder session!
+**Output:**
+```
+============================================================
+Sarah, 25
+Loves hiking and coffee ☕
 
-This will:
-1. Ask for your preferences (type, age range, distance, interests)
-2. Connect to your Tinder session
-3. Process profiles with AI scoring
-4. Auto-swipe based on compatibility
-5. Show you a summary with top matches
+Score: 8.5/10
+Reasoning: Clear face visible, attractive, good grooming
 
-### Command Options
-
-```bash
-# Use default preferences
-node dist/index.js start --skip-preferences
-
-# Fast mode (no delays between swipes)
-node dist/index.js start --auto
-
-# Limit number of profiles
-node dist/index.js start --limit 50
-
-# Test with mock profiles (no real Tinder)
-node dist/index.js start --mock
+✓ Recommendation: Swipe Right ❤️
+============================================================
 ```
 
-### Test Mode (Mock Profiles)
+### Auto-Swipe
 
 ```bash
-npm test
+# Process 20 profiles, swipe right if score >= 7
+tinder-agent auto-swipe --skip-preferences
+
+# Custom settings
+tinder-agent auto-swipe --limit 50 --min-score 8 --skip-preferences
+
+# Fast mode (2s delays)
+tinder-agent auto-swipe --limit 100 --auto --skip-preferences
+```
+
+### Options
+
+```
+--limit <number>      Number of profiles (default: 20)
+--min-score <number>  Min score to swipe right 1-10 (default: 7)
+--auto                Auto mode with reduced delays
+--skip-preferences    Skip preference collection
 ```
 
 ## How It Works

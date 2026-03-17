@@ -4,35 +4,131 @@ import 'dotenv/config';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { PreferenceCollector } from './preferences.js';
-import { TinderAgent } from './agent.js';
 import { AgentBrowserControl } from './agentBrowser.js';
-import { CSVExporter } from './csvExporter.js';
+import { ProfileAnalyzer } from './analyze.js';
+import { AutoSwiper } from './autoSwiper.js';
 
 const program = new Command();
 
 program
   .name('tinder-agent')
-  .description('AI-powered Tinder swiping agent using Claude')
+  .description('AI-powered Tinder swiping agent')
   .version('1.0.0');
 
+/**
+ * Command: swipe-right
+ * Swipe right on current profile
+ */
 program
-  .command('start')
-  .description('Start the Tinder agent with real browser automation')
-  .option('-a, --auto', 'Auto-swipe without delays', false)
-  .option('--skip-preferences', 'Skip preference collection (use defaults)', false)
-  .option('--limit <number>', 'Limit number of profiles to process', '20')
+  .command('swipe-right')
+  .description('Swipe right (LIKE) on the current profile')
+  .action(async () => {
+    try {
+      const browser = new AgentBrowserControl();
+      console.log(chalk.cyan('👆 Swiping right...'));
+      await browser.swipeRight();
+      await browser.nextProfile();
+      console.log(chalk.green('✅ Done!\n'));
+    } catch (error) {
+      console.error(chalk.red(`❌ Error: ${error}\n`));
+      process.exit(1);
+    }
+  });
+
+/**
+ * Command: swipe-left
+ * Swipe left on current profile
+ */
+program
+  .command('swipe-left')
+  .description('Swipe left (NOPE) on the current profile')
+  .action(async () => {
+    try {
+      const browser = new AgentBrowserControl();
+      console.log(chalk.cyan('👆 Swiping left...'));
+      await browser.swipeLeft();
+      await browser.nextProfile();
+      console.log(chalk.green('✅ Done!\n'));
+    } catch (error) {
+      console.error(chalk.red(`❌ Error: ${error}\n`));
+      process.exit(1);
+    }
+  });
+
+/**
+ * Command: analyze
+ * Analyze current profile without swiping
+ */
+program
+  .command('analyze')
+  .description('Analyze the current profile without swiping')
+  .action(async () => {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error(chalk.red('\n❌ Error: OPENAI_API_KEY not set\n'));
+      process.exit(1);
+    }
+
+    try {
+      const browser = new AgentBrowserControl();
+      const analyzer = new ProfileAnalyzer(apiKey);
+
+      console.log(chalk.cyan('🔍 Analyzing current profile...\n'));
+
+      const pageText = await browser.getPageText();
+      const imageUrls = await browser.getProfileImages();
+
+      console.log(chalk.gray(`📸 Found ${imageUrls.length} images`));
+
+      const result = await analyzer.analyze(pageText, imageUrls, {
+        type: ['attractive'],
+        ageRange: { min: 20, max: 35 },
+        distance: 50,
+        interests: []
+      });
+
+      console.log('\n' + '='.repeat(60));
+      console.log(chalk.bold.cyan(`\n${result.name}, ${result.age}`));
+      console.log(chalk.white(result.bio || '(no bio)'));
+
+      const scoreColor = result.score >= 7 ? chalk.green : result.score >= 5 ? chalk.yellow : chalk.red;
+      console.log('\n' + chalk.bold('Score: ') + scoreColor(`${result.score}/10`));
+      console.log(chalk.gray(`Reasoning: ${result.reasoning}`));
+
+      if (result.action === 'RIGHT') {
+        console.log(chalk.green.bold('\n✓ Recommendation: Swipe Right ❤️'));
+      } else {
+        console.log(chalk.red.bold('\n✗ Recommendation: Swipe Left ❌'));
+      }
+
+      console.log('='.repeat(60) + '\n');
+
+    } catch (error) {
+      console.error(chalk.red(`❌ Error: ${error}\n`));
+      process.exit(1);
+    }
+  });
+
+/**
+ * Command: auto-swipe
+ * Automated swiping with AI analysis
+ */
+program
+  .command('auto-swipe')
+  .description('Automatically swipe through profiles with AI analysis')
+  .option('--limit <number>', 'Number of profiles to process', '20')
+  .option('--min-score <number>', 'Minimum score to swipe right (1-10)', '7')
+  .option('--auto', 'Auto mode (no delays)', false)
+  .option('--skip-preferences', 'Skip preference collection', false)
   .action(async (options) => {
     const apiKey = process.env.OPENAI_API_KEY;
-
     if (!apiKey) {
-      console.error(chalk.red('\n❌ Error: OPENAI_API_KEY environment variable not set\n'));
+      console.error(chalk.red('\n❌ Error: OPENAI_API_KEY not set\n'));
       console.log(chalk.yellow('Set it with: export OPENAI_API_KEY=your-api-key\n'));
       process.exit(1);
     }
 
     try {
-      const agent = new TinderAgent(apiKey);
-
       // Collect preferences
       let preferences;
       if (options.skipPreferences) {
@@ -42,151 +138,71 @@ program
           distance: 50,
           interests: ['travel', 'fun', 'adventure']
         };
-        console.log(chalk.gray('\nUsing default preferences (prioritizing attractiveness)...\n'));
+        console.log(chalk.gray('\nUsing default preferences...\n'));
       } else {
         const collector = new PreferenceCollector();
         preferences = await collector.collect();
       }
 
-      agent.setPreferences(preferences);
+      // Create auto-swiper and run
+      const swiper = new AutoSwiper(apiKey);
 
-      // Real Tinder automation using agent-browser
-      const browser = new AgentBrowserControl();
-      const csvExporter = new CSVExporter();
+      await swiper.run(preferences, {
+        limit: parseInt(options.limit),
+        minScore: parseFloat(options.minScore),
+        autoMode: options.auto
+      });
 
-      console.log(chalk.cyan('🌐 Connecting to Chrome with remote debugging...\n'));
-      console.log(chalk.gray('Make sure Chrome is running with: --remote-debugging-port=9222\n'));
+      console.log(chalk.green('✨ Auto-swipe complete!\n'));
 
-      // Ensure Tinder page is loaded
-      await browser.ensureTinderPage();
-
-      console.log(chalk.green('✅ Connected to Tinder!\n'));
-
-      // Process profiles
-      const limit = parseInt(options.limit);
-      console.log(chalk.magenta(`🔥 Starting Tinder Agent (processing up to ${limit} profiles)...\n`));
-
-      const seenProfiles = new Set<string>();
-
-      for (let i = 0; i < limit; i++) {
-        // First, check if buttons are available (means a profile is loaded)
-        const snapshot = await browser['run']('snapshot -i');
-        const hasButtons = snapshot.includes('button "NOPE"') && snapshot.includes('button "LIKE"');
-
-        if (!hasButtons) {
-          console.log(chalk.yellow('\n⚠️  No profile loaded (out of profiles or still loading)\n'));
-          console.log(chalk.gray('Waiting 5 seconds for profile to load...\n'));
-          await new Promise(resolve => setTimeout(resolve, 5000));
-
-          // Check again
-          const snapshot2 = await browser['run']('snapshot -i');
-          const hasButtons2 = snapshot2.includes('button "NOPE"') && snapshot2.includes('button "LIKE"');
-
-          if (!hasButtons2) {
-            console.log(chalk.yellow('⚠️  Still no profile - stopping\n'));
-            break;
-          }
-        }
-
-        // Get raw page text and images
-        const pageText = await browser.getPageText();
-        const imageUrls = await browser.getProfileImages();
-
-        if (!pageText || pageText.length < 100) {
-          console.log(chalk.yellow('\n⚠️  No profile data found\n'));
-          break;
-        }
-
-        console.log(chalk.gray(`📸 Found ${imageUrls.length} images`));
-
-        // Extract name from the photos region aria-label (most reliable)
-        let profileName = 'unknown';
-        let profileAge = 0;
-
-        const snapshotForName = await browser['run']('snapshot -i');
-        const nameMatch = snapshotForName.match(/region "(.+?)'s photos"/);
-        if (nameMatch) {
-          profileName = nameMatch[1];
-          console.log(chalk.gray(`📛 Found profile name from snapshot: ${profileName}`));
-        }
-
-        // Quick extraction for age
-        const quickExtractPrompt = `Extract just the age from this Tinder profile text:
-${pageText.substring(0, 500)}
-
-Return ONLY JSON: {"age": number}`;
-
-        const quickExtract = await agent.scorer['client'].chat.completions.create({
-          model: 'gpt-4o-mini',
-          max_completion_tokens: 50,
-          response_format: { type: 'json_object' },
-          messages: [{ role: 'user', content: quickExtractPrompt }]
-        });
-
-        try {
-          const extracted = JSON.parse(quickExtract.choices[0].message.content || '{}');
-          profileAge = extracted.age || 0;
-        } catch (e) {
-          console.log(chalk.gray('⚠️  Could not extract age'));
-        }
-
-        // Download images locally with proper naming
-        let localImagePaths: string[] = [];
-        if (imageUrls.length > 0) {
-          console.log(chalk.gray(`⬇️  Downloading images for ${profileName}...`));
-          localImagePaths = await csvExporter.downloadImages(imageUrls, profileName, profileAge);
-          console.log(chalk.gray(`✅ Downloaded ${localImagePaths.length} images\n`));
-        }
-
-        // Let LLM extract everything and decide (using local image paths)
-        const decision = await agent.scorer.analyzeAndScore(pageText, localImagePaths, preferences);
-
-        // Check for duplicates
-        const profileKey = `${decision.extractedProfile.name}-${decision.extractedProfile.age}`;
-        if (seenProfiles.has(profileKey)) {
-          console.log(chalk.yellow(`\n⚠️  Duplicate profile detected: ${profileKey}`));
-          console.log(chalk.yellow(`This means the swipe didn't work or we're stuck. Breaking loop.\n`));
-          break; // Stop instead of continuing - we're stuck
-        }
-        seenProfiles.add(profileKey);
-
-        // Save to CSV with already-downloaded image paths
-        await csvExporter.saveProfile(decision, localImagePaths);
-
-        // Display profile
-        console.log('\n' + '='.repeat(60));
-        console.log(chalk.bold.cyan(`\n${decision.extractedProfile.name}, ${decision.extractedProfile.age}`));
-        console.log(chalk.white(decision.extractedProfile.bio));
-
-        const scoreColor = decision.score >= 7 ? chalk.green : decision.score >= 5 ? chalk.yellow : chalk.red;
-        console.log('\n' + chalk.bold('Score: ') + scoreColor(`${decision.score}/10`));
-        console.log(chalk.gray(`Reasoning: ${decision.reasoning}`));
-
-        if (decision.action === 'RIGHT') {
-          console.log(chalk.green.bold('\n✓ Action: Swipe Right ❤️'));
-          await browser.swipeRight();
-        } else {
-          console.log(chalk.red.bold('\n✗ Action: Swipe Left ❌'));
-          await browser.swipeLeft();
-        }
-
-        console.log('='.repeat(60));
-
-        if (!options.auto) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-      }
-
-      console.log(chalk.cyan('\n🎉 Done! Check Chrome to see the results.\n'));
-      console.log(chalk.green(`✨ Agent session complete!\n`));
-      console.log(chalk.blue(`📊 Results saved to: ${csvExporter.getFilePath()}\n`));
     } catch (error) {
-      if (error instanceof Error) {
-        console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
-      }
+      console.error(chalk.red(`❌ Error: ${error}\n`));
       process.exit(1);
     }
   });
 
+/**
+ * Legacy command: start (keep for backwards compatibility)
+ */
+program
+  .command('start')
+  .description('[DEPRECATED] Use auto-swipe instead')
+  .option('--limit <number>', 'Number of profiles to process', '20')
+  .option('--skip-preferences', 'Skip preference collection', false)
+  .action(async (options) => {
+    console.log(chalk.yellow('⚠️  The "start" command is deprecated. Use "auto-swipe" instead.\n'));
+    console.log(chalk.gray('Redirecting to auto-swipe...\n'));
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error(chalk.red('\n❌ Error: OPENAI_API_KEY not set\n'));
+      process.exit(1);
+    }
+
+    try {
+      let preferences;
+      if (options.skipPreferences) {
+        preferences = {
+          type: ['attractive'],
+          ageRange: { min: 20, max: 30 },
+          distance: 50,
+          interests: []
+        };
+      } else {
+        const collector = new PreferenceCollector();
+        preferences = await collector.collect();
+      }
+
+      const swiper = new AutoSwiper(apiKey);
+      await swiper.run(preferences, {
+        limit: parseInt(options.limit),
+        autoMode: false
+      });
+
+    } catch (error) {
+      console.error(chalk.red(`❌ Error: ${error}\n`));
+      process.exit(1);
+    }
+  });
 
 program.parse();
