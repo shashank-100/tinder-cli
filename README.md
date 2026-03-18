@@ -1,182 +1,125 @@
-# Tinder Agent 🤖❤️
+# tinder-agent 🤖❤️
 
-AI-powered Tinder automation agent with **clean architecture** and **Vision API** analysis.
+AI-powered Tinder automation CLI. Uses real Chrome browser control + GPT-4o Vision to analyze and swipe profiles automatically.
 
-## Features
+## How It Works
 
-- ✅ **4 CLI Commands** - Manual swipes, analysis, and auto-swipe
-- 🤖 **Vision API Analysis** - GPT-4o-mini analyzes profile images for attractiveness
-- 🎯 **Smart Filtering** - Min score threshold, duplicate detection
-- 📊 **Face Detection** - Rejects profiles with no visible face
-- 🎨 **Beautiful CLI** - Clean, colorful terminal output
-- 📈 **CSV Export** - Save all decisions with downloaded images
-- ⚡ **Fast Automation** - Uses agent-browser for real Chrome control
-- 🏗️ **Clean Architecture** - Separated layers: CLI → Agent → Analyzer → Browser Tools
+```
+Chrome (port 9222)
+       ↓
+agent-browser       ← clicks photo tabs, reads snapshot
+       ↓
+GPT-4o-mini Vision  ← scores profile images 0–10
+       ↓
+swipe right / left  ← based on score threshold
+```
 
-## Quick Start
+## Prerequisites
 
-### Prerequisites
-
+**1. Chrome with remote debugging**
 ```bash
-# 1. Install agent-browser globally
-npm install -g agent-browser
-
-# 2. Set OpenAI API key
-export OPENAI_API_KEY=your-key-here
-
-# 3. Start Chrome with debugging
 /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
   --remote-debugging-port=9222 \
   --user-data-dir=/tmp/chrome-debug
-
-# 4. Login to Tinder in Chrome
-# Navigate to https://tinder.com/app/recs
 ```
 
-### Installation
+**2. agent-browser CLI**
+```bash
+npm install -g agent-browser
+```
+
+**3. OpenAI API key**
+```bash
+export OPENAI_API_KEY=your-key-here
+```
+
+**4. Log into Tinder in that Chrome window**
+Navigate to `https://tinder.com/app/recs`
+
+## Installation
 
 ```bash
 npm install
 npm run build
+npm link   # makes tinder-agent available globally
 ```
 
 ## Commands
 
-### Manual Swipes
-
+### Analyze current profile
 ```bash
-# Swipe right on current profile
-tinder-agent swipe-right
-
-# Swipe left on current profile
-tinder-agent swipe-left
-```
-
-### Analyze (No Swipe)
-
-```bash
-# Get AI recommendation without swiping
 tinder-agent analyze
 ```
+Shows score, reasoning, and recommendation — no swipe.
 
-**Output:**
 ```
 ============================================================
-Sarah, 25
-Loves hiking and coffee ☕
+Priya, 24
+coffee addict + dog mom
 
-Score: 8.5/10
-Reasoning: Clear face visible, attractive, good grooming
+Score: 8.2/10
+Reasoning: Clear face, good grooming, confident expression
 
 ✓ Recommendation: Swipe Right ❤️
 ============================================================
 ```
 
-### Auto-Swipe
-
+### Swipe manually
 ```bash
-# Process 20 profiles, swipe right if score >= 7
-tinder-agent auto-swipe --skip-preferences
-
-# Custom settings
-tinder-agent auto-swipe --limit 50 --min-score 8 --skip-preferences
-
-# Fast mode (2s delays)
-tinder-agent auto-swipe --limit 100 --auto --skip-preferences
+tinder-agent swipe-right
+tinder-agent swipe-left
 ```
 
-### Options
-
-```
---limit <number>      Number of profiles (default: 20)
---min-score <number>  Min score to swipe right 1-10 (default: 7)
---auto                Auto mode with reduced delays
---skip-preferences    Skip preference collection
+### Auto-swipe
+```bash
+tinder-agent auto-swipe               # 20 profiles, min score 7
+tinder-agent auto-swipe --limit 50    # 50 profiles
+tinder-agent auto-swipe --min-score 8 # stricter threshold
 ```
 
-## How It Works
+```
+[1/20] Waiting for profile...
+📸 Found 4 images
 
-### Scoring Algorithm
+============================================================
+Anya, 26
+(no bio)
 
-Each profile receives a score from 0-10 based on:
+Score: 6.1/10
+Reasoning: Face visible but partially obscured, average presentation
 
-- **35%** Interest Match - Overlap with your interests
-- **25%** Age Match - Fit within your age range
-- **20%** Distance Score - Proximity to you
-- **20%** Bio Similarity - Claude analyzes bio compatibility
+✗ Swipe Left ❌
+============================================================
 
-**Swipe Decision**: Score >= 7.0 = Right Swipe ❤️, Score < 7.0 = Left Swipe ❌
+📊 Summary
+❤️  Right: 6
+❌ Left: 14
+```
 
-### Preference Matching
+## Options
 
-The agent learns your preferences and applies them consistently:
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--limit` | 20 | Number of profiles to process |
+| `--min-score` | 7 | Minimum score (0–10) to swipe right |
 
-- **Type**: Personality/lifestyle descriptors (athletic, tech, creative)
-- **Age Range**: Min and max age preferences
-- **Distance**: Maximum distance in kilometers
-- **Interests**: Keywords you're looking for
+## Scoring
 
-### Claude Integration
+GPT-4o-mini Vision evaluates each profile's photos:
 
-Claude analyzes each profile's bio to:
-- Evaluate personality alignment
-- Identify green/red flags
-- Provide reasoning for scores
-- Consider vibe and compatibility
+- **No face visible** → score 0 (auto swipe left)
+- **Face visible** → scored 1–10 based on attractiveness, grooming, confidence
+- **Score ≥ min-score** → swipe right
+- **Score < min-score** → swipe left
 
 ## Project Structure
 
 ```
 src/
-├── index.ts           # CLI entry point
-├── agent.ts           # Main agent logic
-├── preferences.ts     # Preference collection
-├── scorer.ts          # Profile scoring engine
-├── mockData.ts        # Test profiles
-└── types.ts           # TypeScript interfaces
+├── index.ts          # CLI commands (swipe-right, swipe-left, analyze, auto-swipe)
+├── agentBrowser.ts   # Browser automation (snapshots, clicks, image extraction)
+└── analyze.ts        # GPT-4o Vision analysis
 ```
-
-## Example Output
-
-```
-🤖 Let's set up your preferences!
-
-? What type of people do you prefer? athletic, tech, creative
-? Minimum age? 23
-? Maximum age? 30
-? Maximum distance (km)? 20
-? What interests are you looking for? startup, AI, travel
-
-✅ Preferences saved!
-
-🔥 Starting Tinder Agent...
-
-Processing 10 profiles...
-
-============================================================
-
-Sarah, 26
-5km away
-
-AI researcher by day, marathon runner by night. Building the future one model at a time.
-
-Interests: AI, running, tech, coffee
-
-⠹ Analyzing profile...
-
-Score: 8.9/10
-Reasoning: Strong alignment with tech/AI interests and athletic lifestyle
-
-✓ Action: Swipe Right ❤️
-============================================================
-```
-
-## Advanced Features (Future)
-
-- **Memory**: Agent learns from your swipes over time
-- **Vision**: Analyze profile photos
-- **Auto-messaging**: Generate personalized openers
-- **Real Tinder Integration**: Connect to actual Tinder API
 
 ## License
 

@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
-import { UserPreferences } from './types.js';
 
 /**
  * ANALYZE LAYER: LLM-powered profile analysis
@@ -29,8 +28,7 @@ export class ProfileAnalyzer {
    */
   async analyze(
     pageText: string,
-    imagePaths: string[],
-    preferences: UserPreferences
+    imagePaths: string[]
   ): Promise<AnalysisResult> {
     // Step 1: Extract profile data from text
     const profile = await this.extractProfile(pageText);
@@ -38,21 +36,12 @@ export class ProfileAnalyzer {
     // Step 2: Analyze images using Vision API
     const imageAnalysis = await this.analyzeImages(imagePaths);
 
-    // Step 3: Calculate final score
-    let finalScore = imageAnalysis.score;
-
-    // Penalize if no bio
-    const hasBio = profile.bio && profile.bio.trim().length > 10;
-    if (!hasBio) {
-      finalScore = Math.max(0, finalScore - 2);
-    }
+    // Step 3: Calculate final score (images only)
+    const finalScore = imageAnalysis.score;
 
     // Step 4: Decide action
     const action = finalScore >= 7.0 ? 'RIGHT' : 'LEFT';
-
-    const reasoning = hasBio
-      ? imageAnalysis.reasoning
-      : `${imageAnalysis.reasoning} (no bio: -2 pts)`;
+    const reasoning = imageAnalysis.reasoning;
 
     return {
       score: Math.round(finalScore * 10) / 10,
