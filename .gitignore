@@ -6,3 +6,4 @@ dist/
 *.csv
 temp/
 .tinder-browser-profile/
+profile_images/
