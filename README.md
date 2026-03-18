@@ -28,10 +28,20 @@ swipe right / left  ← based on score threshold
 npm install -g agent-browser
 ```
 
-**3. OpenAI API key**
+**3. OpenAI API key** (required for image rating)
+
+Get your key at [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+
 ```bash
 export OPENAI_API_KEY=your-key-here
 ```
+
+Or add it to a `.env` file in the project root:
+```
+OPENAI_API_KEY=your-key-here
+```
+
+> Images are rated using `gpt-5.1-2025-11-13` Vision. Each profile costs ~4 image API calls.
 
 **4. Log into Tinder in that Chrome window**
 Navigate to `https://tinder.com/app/recs`
@@ -105,7 +115,7 @@ Reasoning: Face visible but partially obscured, average presentation
 
 ## Scoring
 
-GPT-4o-mini Vision evaluates each profile's photos:
+`gpt-5.1-2025-11-13` Vision evaluates each profile's photos:
 
 - **No face visible** → score 0 (auto swipe left)
 - **Face visible** → scored 1–10 based on attractiveness, grooming, confidence
