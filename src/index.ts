@@ -8,6 +8,8 @@ import { ProfileAnalyzer } from './analyze.js';
 
 const program = new Command();
 
+console.log(chalk.yellow('⚠️  BETA: Use in moderation. Excessive automation may get your Tinder account flagged or banned.\n'));
+
 program
   .name('tinder-agent')
   .description('AI-powered Tinder swiping agent')

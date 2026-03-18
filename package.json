@@ -1,6 +1,6 @@
 {
   "name": "tinder-cli",
-  "version": "1.0.0",
+  "version": "0.1.0-beta",
   "description": "AI-powered Tinder agent using Claude",
   "main": "dist/index.js",
   "type": "module",
